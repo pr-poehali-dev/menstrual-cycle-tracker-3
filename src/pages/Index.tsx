@@ -182,18 +182,80 @@ export default function Index() {
   };
 
   const SHORT_DAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+  const MONTHS_SHORT = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
 
-  const WeekStrip = ({ mode }: { mode: "cycle" | "pregnancy" | "conceive" }) => (
-    <div className="card-soft rounded-3xl p-4">
-      <div className="flex items-center gap-2 mb-3">
+  // День цикла (от начала последней менструации)
+  const cycleDay = cycleStart
+    ? Math.floor((today.getTime() - new Date(cycleStart).getTime()) / 86400000) + 1
+    : null;
+
+  // Фаза цикла и вероятность по дню
+  const getCyclePhaseInfo = (day: number | null) => {
+    if (!day || day < 1) return null;
+    if (day <= 5)  return { phase: "Менструация",    color: "text-rose-500",   bg: "bg-rose-50 border-rose-200",   prob: 2,  probLabel: "Очень низкая", probColor: "bg-rose-200" };
+    if (day <= 9)  return { phase: "Фолликулярная",  color: "text-orange-500", bg: "bg-orange-50 border-orange-200", prob: 10, probLabel: "Низкая",      probColor: "bg-orange-200" };
+    if (day <= 11) return { phase: "Пред-овуляция",  color: "text-amber-500",  bg: "bg-amber-50 border-amber-200",  prob: 30, probLabel: "Средняя",     probColor: "bg-amber-300" };
+    if (day <= 16) return { phase: "Овуляция 🌿",    color: "text-green-600",  bg: "bg-green-50 border-green-200",  prob: 85, probLabel: "Высокая!",    probColor: "bg-green-400" };
+    if (day <= 21) return { phase: "Лютеиновая",     color: "text-teal-500",   bg: "bg-teal-50 border-teal-200",    prob: 15, probLabel: "Низкая",      probColor: "bg-teal-300" };
+    if (day <= 28) return { phase: "Предменструальная", color: "text-purple-500", bg: "bg-purple-50 border-purple-200", prob: 5, probLabel: "Очень низкая", probColor: "bg-purple-200" };
+    return { phase: "Новый цикл скоро", color: "text-pink-500", bg: "bg-pink-50 border-pink-200", prob: 5, probLabel: "Очень низкая", probColor: "bg-pink-200" };
+  };
+
+  const phaseInfo = getCyclePhaseInfo(cycleDay);
+
+  // Данные по неделям беременности
+  const PREGNANCY_WEEKS: Record<number, { emoji: string; fruit: string; weight: string; size: string; dev: string }> = {
+    4:  { emoji: "🫐", fruit: "Черника",      weight: "< 1 г",   size: "1 мм",   dev: "Формируется нейронная трубка" },
+    5:  { emoji: "🌱", fruit: "Семечко",       weight: "< 1 г",   size: "2 мм",   dev: "Начинает биться сердечко" },
+    6:  { emoji: "🫘", fruit: "Горошина",      weight: "< 1 г",   size: "5 мм",   dev: "Закладываются ручки и ножки" },
+    7:  { emoji: "🫐", fruit: "Черника",       weight: "< 1 г",   size: "8 мм",   dev: "Формируется мозг и лицо" },
+    8:  { emoji: "🍇", fruit: "Виноград",      weight: "1 г",     size: "1.6 см", dev: "Все органы заложены" },
+    9:  { emoji: "🍒", fruit: "Вишня",         weight: "2 г",     size: "2.3 см", dev: "Малыш двигает ручками" },
+    10: { emoji: "🍓", fruit: "Клубника",      weight: "4 г",     size: "3 см",   dev: "Формируются зубки" },
+    11: { emoji: "🍋", fruit: "Лайм",          weight: "7 г",     size: "4 см",   dev: "Почки начинают работать" },
+    12: { emoji: "🌰", fruit: "Слива",         weight: "14 г",    size: "5.4 см", dev: "Виден пол при УЗИ" },
+    13: { emoji: "🍑", fruit: "Персик",        weight: "23 г",    size: "7.4 см", dev: "Малыш умеет сосать" },
+    14: { emoji: "🍋", fruit: "Лимон",         weight: "43 г",    size: "8.7 см", dev: "Мимика лица" },
+    16: { emoji: "🥑", fruit: "Авокадо",       weight: "100 г",   size: "11.6 см","dev": "Слышит голоса" },
+    18: { emoji: "🌶️", fruit: "Перец",         weight: "190 г",   size: "14.2 см","dev": "Активно шевелится" },
+    20: { emoji: "🍌", fruit: "Банан",         weight: "300 г",   size: "16.4 см","dev": "Половина пути!" },
+    22: { emoji: "🌽", fruit: "Кукуруза",      weight: "430 г",   size: "27 см",  dev: "Реагирует на звуки" },
+    24: { emoji: "🌽", fruit: "Кукуруза",      weight: "600 г",   size: "30 см",  dev: "Открывает глазки" },
+    26: { emoji: "🥬", fruit: "Кочан салата",  weight: "760 г",   size: "35 см",  dev: "Дышит амниотической жидкостью" },
+    28: { emoji: "🍆", fruit: "Баклажан",      weight: "1 кг",    size: "37 см",  dev: "Видит свет сквозь живот" },
+    30: { emoji: "🥦", fruit: "Брокколи",      weight: "1.3 кг",  size: "40 см",  dev: "Накапливает жир" },
+    32: { emoji: "🥥", fruit: "Кокос",         weight: "1.7 кг",  size: "42 см",  dev: "Мозг быстро развивается" },
+    34: { emoji: "🍍", fruit: "Ананас",        weight: "2.1 кг",  size: "45 см",  dev: "Лёгкие почти готовы" },
+    36: { emoji: "🥬", fruit: "Кочан капусты", weight: "2.6 кг",  size: "47 см",  dev: "Опускается в таз" },
+    38: { emoji: "🎃", fruit: "Тыква",         weight: "3 кг",    size: "49 см",  dev: "Готов к появлению на свет!" },
+    40: { emoji: "🎃", fruit: "Тыква",         weight: "3.4 кг",  size: "51 см",  dev: "Ждём встречи! 👶" },
+  };
+
+  const getPregnancyWeekData = (weeks: number) => {
+    const keys = Object.keys(PREGNANCY_WEEKS).map(Number).sort((a, b) => a - b);
+    const key = keys.reduce((prev, cur) => (cur <= weeks ? cur : prev), keys[0]);
+    return PREGNANCY_WEEKS[key] ?? PREGNANCY_WEEKS[4];
+  };
+
+  const WeekStrip = ({ mode }: { mode: "cycle" | "pregnancy" | "conceive" }) => {
+    const pregWeekData = (mode === "pregnancy" && weeksPregnant && weeksPregnant > 0)
+      ? getPregnancyWeekData(weeksPregnant)
+      : null;
+
+    return (
+    <div className="card-soft rounded-3xl p-4 space-y-4">
+      {/* Заголовок + неделя */}
+      <div className="flex items-center gap-2">
         <span className="w-7 h-7 rounded-xl bg-pink-100 flex items-center justify-center">
           <Icon name="CalendarRange" size={14} className="text-primary" />
         </span>
         <span className="font-display text-base text-foreground">Эта неделя</span>
         <span className="ml-auto text-xs text-muted-foreground font-body">
-          {weekStrip[0].getDate()} – {weekStrip[6].getDate()} {["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"][weekStrip[0].getMonth()]}
+          {weekStrip[0].getDate()} – {weekStrip[6].getDate()} {MONTHS_SHORT[weekStrip[0].getMonth()]}
         </span>
       </div>
+
+      {/* Дни недели */}
       <div className="grid grid-cols-7 gap-1">
         {weekStrip.map((dt, i) => {
           const isNow = isSameDay(dt, today);
@@ -205,7 +267,7 @@ export default function Index() {
           const isPregnantDay = pregLabel === "pregnant" || pregLabel === "start";
 
           return (
-            <div key={i} className="flex flex-col items-center gap-1">
+            <div key={i} className="flex flex-col items-center gap-0.5">
               <span className="text-xs text-muted-foreground font-body">{SHORT_DAYS[i]}</span>
               <div className={`
                 w-9 h-9 rounded-2xl flex flex-col items-center justify-center relative transition-all
@@ -217,24 +279,90 @@ export default function Index() {
                   "bg-white/60 text-foreground border border-pink-100"}
               `}>
                 <span className="text-sm font-medium font-body leading-none">{dt.getDate()}</span>
-                {(isPeriod || isOvulation || isDue || isPregnantDay) && !isNow && (
-                  <span className="w-1 h-1 rounded-full mt-0.5 block"
-                    style={{ background: isPeriod ? "#f43f5e" : isOvulation ? "#22c55e" : "#a855f7" }}
-                  />
-                )}
               </div>
-              <span className="text-center leading-none" style={{ fontSize: "9px", color: "hsl(335,30%,60%)" }}>
-                {isPeriod && !isNow ? "🩸" :
-                 isOvulation ? "🌿" :
-                 isDue ? "👶" :
-                 isPregnantDay && !isNow ? "🤰" : ""}
+              <span style={{ fontSize: "10px" }}>
+                {isPeriod ? "🩸" : isOvulation ? "🌿" : isDue ? "👶" : isPregnantDay && !isNow ? "🤰" : " "}
               </span>
             </div>
           );
         })}
       </div>
+
+      {/* Блок: день цикла + фаза + вероятность (cycle и conceive) */}
+      {mode !== "pregnancy" && (
+        <>
+          {cycleDay && phaseInfo ? (
+            <div className={`rounded-2xl border px-4 py-3 ${phaseInfo.bg}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground font-body">День цикла</p>
+                  <p className={`text-2xl font-display font-semibold ${phaseInfo.color}`}>{cycleDay}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground font-body">Фаза</p>
+                  <p className={`text-sm font-semibold font-body ${phaseInfo.color}`}>{phaseInfo.phase}</p>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-xs text-muted-foreground font-body">Вероятность забеременеть</span>
+                  <span className={`text-xs font-semibold font-body ${phaseInfo.color}`}>{phaseInfo.probLabel}</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/60">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ${phaseInfo.probColor}`}
+                    style={{ width: `${phaseInfo.prob}%` }}
+                  />
+                </div>
+                <p className="text-right text-xs text-muted-foreground font-body mt-0.5">{phaseInfo.prob}%</p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-muted-foreground font-body text-center">
+              Укажите дату начала цикла, чтобы увидеть фазу и вероятность зачатия
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Блок: данные плода (pregnancy) */}
+      {mode === "pregnancy" && (
+        <>
+          {pregWeekData && weeksPregnant ? (
+            <div className="rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-4xl">{pregWeekData.emoji}</span>
+                <div>
+                  <p className="text-xs text-muted-foreground font-body">Неделя беременности</p>
+                  <p className="text-2xl font-display text-purple-600 font-semibold">{weeksPregnant} нед.</p>
+                  <p className="text-xs text-purple-500 font-body">{pregWeekData.dev}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-white/70 px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground font-body">Размер</p>
+                  <p className="text-sm font-semibold text-purple-600 font-body">{pregWeekData.size}</p>
+                </div>
+                <div className="rounded-xl bg-white/70 px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground font-body">Вес</p>
+                  <p className="text-sm font-semibold text-purple-600 font-body">{pregWeekData.weight}</p>
+                </div>
+                <div className="rounded-xl bg-white/70 px-3 py-2 text-center">
+                  <p className="text-xs text-muted-foreground font-body">Как</p>
+                  <p className="text-sm font-semibold text-purple-600 font-body">{pregWeekData.fruit}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-purple-100 bg-purple-50 px-4 py-3 text-sm text-muted-foreground font-body text-center">
+              Укажите дату последней менструации, чтобы увидеть данные о малыше
+            </div>
+          )}
+        </>
+      )}
+
       {/* Легенда */}
-      <div className="flex gap-3 mt-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap">
         {mode !== "pregnancy" && (
           <>
             <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-rose-400 block" />Менструация</span>
@@ -250,7 +378,8 @@ export default function Index() {
         <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-primary block" />Сегодня</span>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderSectionModal = () => {
     if (!activeSection) return null;
