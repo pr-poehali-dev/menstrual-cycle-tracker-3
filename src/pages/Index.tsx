@@ -141,6 +141,117 @@ export default function Index() {
       ? Math.ceil((new Date(cycleEnd).getTime() - new Date(cycleStart).getTime()) / 86400000)
       : null;
 
+  // Мини-неделя: 7 дней начиная с понедельника текущей недели
+  const getWeekDays = () => {
+    const d = new Date(today);
+    const day = d.getDay(); // 0=вс
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - ((day + 6) % 7));
+    return Array.from({ length: 7 }, (_, i) => {
+      const dt = new Date(monday);
+      dt.setDate(monday.getDate() + i);
+      return dt;
+    });
+  };
+
+  const weekStrip = getWeekDays();
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+
+  const getCycleDayLabel = (dt: Date) => {
+    if (!cycleStart) return null;
+    const start = new Date(cycleStart);
+    const end = cycleEnd ? new Date(cycleEnd) : null;
+    if (end && dt >= start && dt <= end) return "period";
+    // Примерная овуляция: +14 дней от начала следующего цикла (start + 14)
+    const ovDay = new Date(start);
+    ovDay.setDate(start.getDate() + 14);
+    if (isSameDay(dt, ovDay)) return "ovulation";
+    return null;
+  };
+
+  const getPregDayLabel = (dt: Date) => {
+    if (!lastPeriod) return null;
+    const start = new Date(lastPeriod);
+    const due = dueDate ? new Date(dueDate) : null;
+    if (isSameDay(dt, start)) return "start";
+    if (due && isSameDay(dt, due)) return "due";
+    if (dt >= start && (!due || dt <= due)) return "pregnant";
+    return null;
+  };
+
+  const SHORT_DAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+
+  const WeekStrip = ({ mode }: { mode: "cycle" | "pregnancy" | "conceive" }) => (
+    <div className="card-soft rounded-3xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-7 h-7 rounded-xl bg-pink-100 flex items-center justify-center">
+          <Icon name="CalendarRange" size={14} className="text-primary" />
+        </span>
+        <span className="font-display text-base text-foreground">Эта неделя</span>
+        <span className="ml-auto text-xs text-muted-foreground font-body">
+          {weekStrip[0].getDate()} – {weekStrip[6].getDate()} {["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"][weekStrip[0].getMonth()]}
+        </span>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {weekStrip.map((dt, i) => {
+          const isNow = isSameDay(dt, today);
+          const cycleLabel = mode !== "pregnancy" ? getCycleDayLabel(dt) : null;
+          const pregLabel = mode === "pregnancy" ? getPregDayLabel(dt) : null;
+          const isPeriod = cycleLabel === "period";
+          const isOvulation = cycleLabel === "ovulation";
+          const isDue = pregLabel === "due";
+          const isPregnantDay = pregLabel === "pregnant" || pregLabel === "start";
+
+          return (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <span className="text-xs text-muted-foreground font-body">{SHORT_DAYS[i]}</span>
+              <div className={`
+                w-9 h-9 rounded-2xl flex flex-col items-center justify-center relative transition-all
+                ${isNow ? "bg-primary text-white shadow-md shadow-primary/30" :
+                  isPeriod ? "bg-rose-100 text-rose-600 border border-rose-200" :
+                  isOvulation ? "bg-green-100 text-green-600 border border-green-200" :
+                  isDue ? "bg-purple-400 text-white shadow-md" :
+                  isPregnantDay ? "bg-purple-100 text-purple-600 border border-purple-200" :
+                  "bg-white/60 text-foreground border border-pink-100"}
+              `}>
+                <span className="text-sm font-medium font-body leading-none">{dt.getDate()}</span>
+                {(isPeriod || isOvulation || isDue || isPregnantDay) && !isNow && (
+                  <span className="w-1 h-1 rounded-full mt-0.5 block"
+                    style={{ background: isPeriod ? "#f43f5e" : isOvulation ? "#22c55e" : "#a855f7" }}
+                  />
+                )}
+              </div>
+              <span className="text-center leading-none" style={{ fontSize: "9px", color: "hsl(335,30%,60%)" }}>
+                {isPeriod && !isNow ? "🩸" :
+                 isOvulation ? "🌿" :
+                 isDue ? "👶" :
+                 isPregnantDay && !isNow ? "🤰" : ""}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {/* Легенда */}
+      <div className="flex gap-3 mt-3 flex-wrap">
+        {mode !== "pregnancy" && (
+          <>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-rose-400 block" />Менструация</span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-green-400 block" />Овуляция</span>
+          </>
+        )}
+        {mode === "pregnancy" && (
+          <>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-purple-400 block" />Беременность</span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-purple-600 block" />Дата родов</span>
+          </>
+        )}
+        <span className="flex items-center gap-1 text-xs text-muted-foreground font-body"><span className="w-2 h-2 rounded-full bg-primary block" />Сегодня</span>
+      </div>
+    </div>
+  );
+
   const renderSectionModal = () => {
     if (!activeSection) return null;
 
@@ -428,6 +539,7 @@ export default function Index() {
         {/* === CYCLE === */}
         {activeTab === "cycle" && (
           <>
+            <WeekStrip mode="cycle" />
             <div className="card-soft rounded-3xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <span className="w-8 h-8 rounded-xl bg-pink-100 flex items-center justify-center">
@@ -574,6 +686,7 @@ export default function Index() {
         {/* === CONCEIVE === */}
         {activeTab === "conceive" && (
           <>
+            <WeekStrip mode="conceive" />
             <div className="card-soft rounded-3xl p-6 text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-200 to-rose-200 flex items-center justify-center mx-auto mb-4">
                 <Icon name="Leaf" size={28} className="text-primary" />
@@ -623,6 +736,7 @@ export default function Index() {
         {/* === PREGNANCY === */}
         {activeTab === "pregnancy" && (
           <>
+            <WeekStrip mode="pregnancy" />
             <div className="card-soft rounded-3xl p-5" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,220,255,0.4))" }}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center">
