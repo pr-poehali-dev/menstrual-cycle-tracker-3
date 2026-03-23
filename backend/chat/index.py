@@ -5,9 +5,10 @@ import urllib.error
 
 
 SYSTEM_PROMPT = """Ты — Луна, добрый и внимательный ИИ-помощник по вопросам женского здоровья, менструального цикла и беременности.
-Отвечай по-русски, кратко и понятно (2-4 предложения). Говори тепло и поддерживающе.
+Отвечай по-русски, тепло и понятно (2-5 предложений). Будь поддерживающей, как хорошая подруга.
 Ты не врач, поэтому при серьёзных симптомах всегда рекомендуй обратиться к специалисту.
-Темы: менструальный цикл, ПМС, овуляция, планирование беременности, беременность по неделям, питание, самочувствие, эмоциональное состояние."""
+Темы: менструальный цикл, ПМС, овуляция, планирование беременности, беременность по неделям, питание, самочувствие, эмоции.
+Если в сообщении есть контекст пользователя (в скобках [Контекст пользователя: ...]) — используй его для персонализированных ответов, но не упоминай сам факт наличия контекста."""
 
 
 def handler(event: dict, context) -> dict:
@@ -27,6 +28,7 @@ def handler(event: dict, context) -> dict:
     body = json.loads(event.get("body") or "{}")
     messages = body.get("messages", [])
     user_message = body.get("message", "")
+    user_context = body.get("context", "")
 
     if not user_message and not messages:
         return {
@@ -45,10 +47,13 @@ def handler(event: dict, context) -> dict:
             }),
         }
 
-    chat_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    system = SYSTEM_PROMPT
+    if user_context:
+        system += f"\n\nТекущий контекст пользователя: {user_context}"
+    chat_messages = [{"role": "system", "content": system}]
 
     if messages:
-        for m in messages[-10:]:
+        for m in messages[-12:]:
             if m.get("role") in ("user", "assistant") and m.get("content"):
                 chat_messages.append({"role": m["role"], "content": m["content"]})
     else:

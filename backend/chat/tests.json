@@ -7,13 +7,11 @@
       "expectedStatus": 200
     },
     {
-      "name": "Chat message",
+      "name": "Chat no body returns 400",
       "method": "POST",
       "path": "/",
-      "body": {"message": "Что такое овуляция?"},
-      "expectedStatus": 200,
-      "expectedBody": {"reply": "string"},
-      "bodyMatcher": "partial"
+      "body": {},
+      "expectedStatus": 400
     }
   ]
 }

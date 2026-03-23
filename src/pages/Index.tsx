@@ -60,13 +60,31 @@ const PREGNANCY_TIPS = [
   { week:"13–26 нед.", tip:"Самый комфортный период. Начните курсы для беременных." },
   { week:"27–40 нед.", tip:"Готовьте сумку в роддом и следите за шевелениями малыша." },
 ];
-const ARTICLES = [
-  { title:"Как читать свой цикл",         tag:"Цикл",         emoji:"🌸" },
-  { title:"Питание при ПМС",              tag:"Здоровье",     emoji:"🥗" },
-  { title:"Признаки овуляции",            tag:"Фертильность", emoji:"🌿" },
-  { title:"Первый триместр: что ожидать", tag:"Беременность", emoji:"👶" },
-  { title:"Йога для беременных",          tag:"Активность",   emoji:"🧘" },
-  { title:"Токсикоз: как справиться",     tag:"Симптомы",     emoji:"💊" },
+const ARTICLES: { title: string; tag: string; emoji: string; text: string }[] = [
+  { title:"Как читать свой цикл",                  tag:"Цикл",         emoji:"🌸", text:"Менструальный цикл начинается с первого дня месячных. Средняя длительность — 21–35 дней. Знание фаз своего цикла помогает лучше понимать своё тело, настроение и самочувствие. Записывайте данные несколько месяцев — и картина станет чёткой." },
+  { title:"Питание при ПМС",                       tag:"Здоровье",     emoji:"🥗", text:"За 7–10 дней до месячных снизьте соль, кофеин и сахар. Добавьте магний (орехи, бобовые, шпинат), кальций (молочные продукты) и витамин B6 (банан, рыба). Это помогает уменьшить вздутие, раздражительность и болезненность груди." },
+  { title:"Признаки овуляции",                     tag:"Фертильность", emoji:"🌿", text:"Овуляция происходит примерно на 14-й день цикла. Признаки: прозрачные тянущиеся выделения, лёгкая боль внизу живота, повышение базальной температуры на 0,2–0,5°C, усиление либидо. Используйте тест-полоски для точного определения." },
+  { title:"Первый триместр: что ожидать",          tag:"Беременность", emoji:"👶", text:"1–12 недели — период активного формирования органов малыша. Вас может беспокоить тошнота, усталость, болезненность груди. Принимайте фолиевую кислоту 400 мкг в день. Избегайте алкоголя, сырого мяса и непастеризованных продуктов." },
+  { title:"Йога для беременных",                   tag:"Активность",   emoji:"🧘", text:"Мягкая йога помогает снять боль в спине, улучшить сон и подготовить тело к родам. Подходят позы кошки-коровы, поза ребёнка, растяжка бёдер. Избегайте лежачих поз на спине после 16 недель и перевёрнутых асан. Занимайтесь с сертифицированным инструктором." },
+  { title:"Токсикоз: как справиться",              tag:"Симптомы",     emoji:"💊", text:"Тошнота по утрам — норма в первом триместре. Помогают: маленькие частые приёмы пищи, имбирный чай, сухарики натощак, витамин B6. Пейте воду маленькими глотками. Если рвота больше 3–4 раз в день — обратитесь к врачу." },
+  { title:"Базальная температура",                 tag:"Фертильность", emoji:"🌡️", text:"Измеряйте температуру каждое утро в одно и то же время, не вставая с постели. После овуляции она поднимается на 0,2–0,5°C и держится до конца цикла. Ведите график несколько месяцев — он поможет точно определить дни овуляции." },
+  { title:"Фолиевая кислота при беременности",    tag:"Питание",      emoji:"💊", text:"Фолиевая кислота снижает риск пороков нервной трубки у ребёнка на 70%. Начинайте приём за 3 месяца до планируемой беременности и продолжайте весь первый триместр. Суточная доза — 400–800 мкг. Также содержится в листовой зелени, бобовых, цитрусовых." },
+  { title:"Второй триместр: золотой период",       tag:"Беременность", emoji:"✨", text:"13–26 недели — самый комфортный период. Тошнота обычно проходит, живот становится заметным, можно почувствовать первые шевеления (16–22 неделя). Самое время для курсов для беременных, прогулок и умеренной физической активности." },
+  { title:"Третий триместр: готовимся к родам",   tag:"Беременность", emoji:"🏥", text:"27–40 недели — малыш активно набирает вес. Готовьте сумку в роддом с 36 недели. Следите за шевелениями: 10 движений за 2 часа — норма. Изучите признаки начала родов: регулярные схватки, отхождение вод, слизистой пробки." },
+  { title:"Упражнения Кегеля",                     tag:"Активность",   emoji:"💪", text:"Упражнения для мышц тазового дна укрепляют их, помогают при недержании и ускоряют восстановление после родов. Сожмите мышцы на 5 секунд, расслабьте на 5. Повторяйте 10–15 раз, 3 раза в день. Можно делать в любом месте — никто не заметит." },
+  { title:"Что нельзя при беременности",           tag:"Безопасность", emoji:"🚫", text:"Избегайте: алкоголя, сигарет, сырой рыбы и мяса, непастеризованных сыров, большого количества кофеина (более 200 мг/день), горячих ванн и сауны выше 39°C, контакта с кошачьим лотком (токсоплазмоз), самолечения." },
+  { title:"Грудное вскармливание: как начать",     tag:"Новорождённый", emoji:"🍼", text:"Первое прикладывание — в первый час после рождения. Кормите по требованию, не по расписанию. Правильный захват соска — залог успеха. Молоко вырабатывается по принципу спроса и предложения. В первые дни вместо молока — молозиво: оно особенно ценно для иммунитета малыша." },
+  { title:"Послеродовое восстановление",           tag:"Здоровье",     emoji:"💗", text:"Первые 6 недель после родов — период восстановления. Нормальны кровянистые выделения (лохии), болезненность швов, перепады настроения. Послеродовая депрессия встречается у 15% женщин — при затяжной грусти обратитесь к специалисту. Не стесняйтесь просить о помощи." },
+  { title:"Анемия при беременности",               tag:"Здоровье",     emoji:"🩸", text:"Железодефицитная анемия — одно из самых частых осложнений беременности. Симптомы: усталость, бледность, головокружение. Ешьте красное мясо, шпинат, чечевицу, гречку. Витамин C улучшает усвоение железа. Чай и кофе снижают его — не пейте сразу после еды." },
+  { title:"Отёки при беременности",                tag:"Симптомы",     emoji:"💧", text:"Умеренные отёки ног во второй половине беременности — норма. Лежите с приподнятыми ногами, носите компрессионные чулки, больше ходите пешком. Насторожитесь при резком нарастании отёков, отёке лица и кистей, сильных головных болях — это могут быть признаки преэклампсии." },
+  { title:"Психологическое здоровье при беременности", tag:"Психология", emoji:"🧠", text:"Гормональные изменения влияют на эмоции. Тревога и перепады настроения — нормальны. Говорите о своих чувствах с партнёром, подругами или специалистом. Медитация, дыхательные практики и прогулки на природе отлично помогают справляться со стрессом." },
+  { title:"Движение плода: что это значит",        tag:"Беременность", emoji:"🤰", text:"Первые шевеления ощущаются на 16–22 неделе. К 28 неделе малыш должен шевелиться минимум 10 раз за 2 часа. Считайте движения каждый день в одно время. Резкое снижение активности — повод срочно обратиться к врачу." },
+  { title:"УЗИ при беременности",                  tag:"Медицина",     emoji:"📋", text:"Плановых УЗИ в России три: на 11–14 неделях (скрининг I), на 18–21 неделях (скрининг II) и на 30–34 неделях. На первом смотрят жизнеспособность и хромосомные риски, на втором — анатомию и пол, на третьем — положение плода и готовность к родам." },
+  { title:"Нерегулярный цикл: причины и решения", tag:"Цикл",         emoji:"📅", text:"Нерегулярный цикл могут вызвать стресс, резкое изменение веса, интенсивные тренировки, синдром поликистозных яичников (СПКЯ), заболевания щитовидной железы. Если цикл сильно варьируется 3+ месяца подряд — обратитесь к гинекологу для обследования." },
+  { title:"Болезненные месячные: дисменорея",      tag:"Симптомы",     emoji:"🌡️", text:"Боль во время месячных вызвана сокращениями матки. Помогают: тепло на низ живота, ибупрофен (принятый заранее), лёгкие упражнения, массаж поясницы. Если боль сильная и мешает жить — проверьтесь на эндометриоз: он встречается у каждой 10-й женщины." },
+  { title:"Питание при беременности по триместрам", tag:"Питание",    emoji:"🥑", text:"1 триместр: фолиевая кислота, нежирное мясо, зелень. 2 триместр: кальций (молочное), омега-3 (рыба, льняное масло), железо. 3 триместр: белок для роста малыша, меньше соли и сладкого, дробное питание из-за давления на желудок. Всегда — много воды." },
+  { title:"Роды: как понять, что начинается",      tag:"Роды",        emoji:"👶", text:"Предвестники: опускание живота, учащение мочеиспускания, отхождение слизистой пробки. Истинные схватки — регулярные, нарастающие, не проходят от движения. Отхождение вод (или подтекание) — едьте в роддом немедленно. Не ждите, если воды зелёные или с кровью." },
+  { title:"Синдром поликистозных яичников (СПКЯ)", tag:"Здоровье",    emoji:"💊", text:"СПКЯ — одна из самых частых причин нарушения цикла и трудностей с зачатием. Признаки: нерегулярные или редкие месячные, акне, избыточный рост волос, трудности с весом. Диагностируется по УЗИ и анализам. Хорошо поддаётся лечению при своевременном обращении к врачу." },
 ];
 
 // ─── Эмбрионы по неделям ─────────────────────────────────────────────────────
@@ -180,6 +198,8 @@ export default function Index() {
   const [showTips,   setShowTips]   = useState(false);
   const [showArticles, setShowArticles] = useState(false);
   const [cycleSaving, setCycleSaving] = useState(false);
+  const [openArticle, setOpenArticle] = useState<number|null>(null);
+  const [articleFilter, setArticleFilter] = useState<string>("Все");
 
   // — Данные беременности —
   const [lastPeriod, setLastPeriod] = useState("");
@@ -190,6 +210,7 @@ export default function Index() {
   const [showPregTips,  setShowPregTips]  = useState(false);
   const [showPregArticles, setShowPregArticles] = useState(false);
   const [pregSaving, setPregSaving] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState<number|null>(null);
 
   // — Партнёр —
   const [partnerStatus, setPartnerStatus] = useState<"none"|"pending"|"active">("none");
@@ -274,6 +295,8 @@ export default function Index() {
     ? Math.floor((today.getTime()-new Date(lastPeriod).getTime())/(7*86400000))
     : null;
 
+  const displayWeek = selectedWeek !== null ? selectedWeek : (weeksPregnant ?? null);
+
   const daysPregnant = lastPeriod
     ? Math.floor((today.getTime()-new Date(lastPeriod).getTime())/86400000)
     : null;
@@ -298,6 +321,19 @@ export default function Index() {
   };
 
   // ── Чат ───────────────────────────────────────────────────────────────────────
+  const buildUserContext = () => {
+    const parts: string[] = [];
+    if (weeksPregnant !== null && weeksPregnant > 0) {
+      parts.push(`Пользователь беременна, срок ${weeksPregnant} недель${daysPregnant?` (день ${daysPregnant})`:""}. ${dueDate?`Дата родов: ${new Date(dueDate).toLocaleDateString("ru-RU")}.`:""}`);
+    } else if (cycleStart) {
+      const cd = cycleDay;
+      const ph = phaseInfo;
+      parts.push(`Текущий день цикла: ${cd ?? "неизвестно"}. Фаза: ${ph?.phase ?? "неизвестно"}.`);
+      if (cycleEnd) parts.push(`Последние месячные: ${new Date(cycleStart).toLocaleDateString("ru-RU")} – ${new Date(cycleEnd).toLocaleDateString("ru-RU")}.`);
+    }
+    return parts.length ? `\n\n[Контекст пользователя: ${parts.join(" ")}]` : "";
+  };
+
   const sendChat = async () => {
     if (!chatInput.trim() || chatLoading) return;
     const userMsg: ChatMsg = { role: "user", content: chatInput.trim() };
@@ -305,11 +341,12 @@ export default function Index() {
     setChatMessages(newMsgs);
     setChatInput("");
     setChatLoading(true);
+    const ctx = buildUserContext();
     try {
       const res = await fetch(CHAT_URL + "/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMsgs }),
+        body: JSON.stringify({ messages: newMsgs, context: ctx }),
       });
       const data = await res.json();
       setChatMessages(prev => [...prev, { role: "assistant", content: data.reply || "Не удалось получить ответ" }]);
@@ -362,8 +399,8 @@ export default function Index() {
     if(isPreg) setPregSymptoms(p=>p.includes(s)?p.filter(x=>x!==s):[...p,s]);
     else       setActiveSymptoms(p=>p.includes(s)?p.filter(x=>x!==s):[...p,s]);
   };
-  const cycleArticles=ARTICLES.filter(a=>a.tag!=="Беременность");
-  const pregArticles=ARTICLES.filter(a=>["Беременность","Симптомы","Активность"].includes(a.tag));
+  const cycleArticles=ARTICLES.filter(a=>!["Беременность","Роды","Новорождённый"].includes(a.tag));
+  const pregArticles=ARTICLES.filter(a=>["Беременность","Симптомы","Активность","Питание","Медицина","Роды","Новорождённый","Безопасность","Психология"].includes(a.tag));
 
   // ── Стили ────────────────────────────────────────────────────────────────────
   const isDark = themeId === "night";
@@ -430,8 +467,9 @@ export default function Index() {
 
   // ── WeekStrip ────────────────────────────────────────────────────────────────
   const WeekStrip = ({ mode }: { mode: "cycle" | "conceive" | "pregnancy" }) => {
-    const pregWD = (mode==="pregnancy" && weeksPregnant && weeksPregnant>=4)
-      ? getPregnancyWeekData(weeksPregnant) : null;
+    const shownWeek = (mode==="pregnancy") ? (displayWeek ?? weeksPregnant) : null;
+    const pregWD = (mode==="pregnancy" && shownWeek && shownWeek>=4)
+      ? getPregnancyWeekData(shownWeek) : null;
     const isCurrentWeek = weekOffset===0;
 
     return (
@@ -550,8 +588,35 @@ export default function Index() {
 
         {/* Блок эмбриона + данных плода */}
         {mode==="pregnancy" && (
-          pregWD && weeksPregnant && weeksPregnant>=4 ? (
+          pregWD && shownWeek && shownWeek>=4 ? (
             <div className="rounded-2xl px-4 py-4 border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50">
+              {/* Навигация по неделям беременности */}
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={()=>setSelectedWeek(w=>{const cur=w??weeksPregnant??4; return Math.max(4,cur-1);})}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:opacity-70 transition-opacity"
+                  style={{ background:"rgba(168,85,247,0.15)" }}>
+                  <Icon name="ChevronLeft" size={14} style={{ color:"#7c3aed" }} />
+                </button>
+                <div className="text-center">
+                  <p className="text-xs text-purple-400 font-body">Неделя</p>
+                  <p className="text-2xl font-display text-purple-600 font-semibold leading-tight">{shownWeek}</p>
+                </div>
+                <button
+                  onClick={()=>setSelectedWeek(w=>{const cur=w??weeksPregnant??4; return Math.min(42,cur+1);})}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:opacity-70 transition-opacity"
+                  style={{ background:"rgba(168,85,247,0.15)" }}>
+                  <Icon name="ChevronRight" size={14} style={{ color:"#7c3aed" }} />
+                </button>
+              </div>
+              {selectedWeek !== null && weeksPregnant !== null && selectedWeek !== weeksPregnant && (
+                <button
+                  onClick={()=>setSelectedWeek(null)}
+                  className="w-full text-xs font-body mb-3 py-1 rounded-full text-center"
+                  style={{ background:"rgba(168,85,247,0.1)", color:"#7c3aed" }}>
+                  ← Вернуться к текущей неделе ({weeksPregnant})
+                </button>
+              )}
               <div className="flex items-center gap-4 mb-3">
                 {/* SVG-эмбрион анимированный */}
                 <div
@@ -559,7 +624,7 @@ export default function Index() {
                   style={{ background:"linear-gradient(135deg,rgba(168,85,247,0.18),rgba(236,72,153,0.12))", border:"2px solid rgba(168,85,247,0.25)" }}
                   title="Привет, малыш! 👋"
                 >
-                  {weeksPregnant <= 6 ? (
+                  {(shownWeek??0) <= 6 ? (
                     <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <style>{`
                         @keyframes embryo-float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-4px) rotate(5deg)} }
@@ -574,7 +639,7 @@ export default function Index() {
                         <circle cx="29" cy="20" r="1.5" fill="rgba(168,85,247,0.7)"/>
                       </g>
                     </svg>
-                  ) : weeksPregnant <= 12 ? (
+                  ) : (shownWeek??0) <= 12 ? (
                     <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <style>{`
                         @keyframes fish-swim { 0%,100%{transform:translateX(0) rotate(-3deg)} 50%{transform:translateX(3px) rotate(3deg)} }
@@ -593,7 +658,7 @@ export default function Index() {
                         <line x1="26" y1="25" x2="26" y2="31" stroke="rgba(168,85,247,0.3)" strokeWidth="1"/>
                       </g>
                     </svg>
-                  ) : weeksPregnant <= 20 ? (
+                  ) : (shownWeek??0) <= 20 ? (
                     <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <style>{`
                         @keyframes baby-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
@@ -638,10 +703,9 @@ export default function Index() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className={`text-xs ${mutedCol} font-body`}>Неделя беременности</p>
-                  <p className="text-3xl font-display text-purple-600 font-semibold leading-tight">{weeksPregnant}</p>
+                  <p className={`text-xs ${mutedCol} font-body`}>Развитие малыша</p>
                   <p className="text-xs text-purple-500 font-body mt-0.5">{pregWD.dev}</p>
-                  {daysPregnant !== null && (
+                  {shownWeek === weeksPregnant && daysPregnant !== null && (
                     <p className="text-xs text-purple-400 font-body mt-0.5">День {daysPregnant}</p>
                   )}
                 </div>
@@ -1157,21 +1221,46 @@ export default function Index() {
             </Card>
 
             <Card>
-              <CardHeader icon="BookOpen" title="Статьи" />
-              {showArticles?(
-                <div className="space-y-3">
-                  {cycleArticles.map((a,i)=>(
-                    <div key={i} className="rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border transition-colors hover:opacity-80"
-                      style={{ background:`${theme.primary}06`, borderColor:`${theme.primary}22` }}>
-                      <span className="text-xl">{a.emoji}</span>
-                      <div>
-                        <p className={`text-sm font-medium ${textCol} font-body`}>{a.title}</p>
-                        <span className="text-xs px-2 py-0.5 rounded-full font-body" style={{ background:`${theme.primary}15`, color:theme.primary }}>{a.tag}</span>
+              <CardHeader icon="BookOpen" title={`Статьи (${cycleArticles.length})`} />
+              {showArticles ? (
+                <>
+                  {/* Фильтр по тегам */}
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {["Все", ...Array.from(new Set(cycleArticles.map(a=>a.tag)))].map(tag=>(
+                      <button key={tag} onClick={()=>{ setArticleFilter(tag); setOpenArticle(null); }}
+                        className="text-xs font-body px-3 py-1 rounded-full border transition-all"
+                        style={articleFilter===tag
+                          ?{ background:theme.chipActive, color:"#fff", borderColor:"transparent" }
+                          :{ background:`${theme.primary}08`, color:theme.primary, borderColor:`${theme.primary}30` }}>
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {cycleArticles.filter(a=>articleFilter==="Все"||a.tag===articleFilter).map((a,i)=>(
+                      <div key={i}>
+                        <div
+                          onClick={()=>setOpenArticle(openArticle===i?null:i)}
+                          className="rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border transition-all hover:opacity-90"
+                          style={{ background:`${theme.primary}06`, borderColor:openArticle===i?theme.primary:`${theme.primary}22` }}>
+                          <span className="text-xl flex-shrink-0">{a.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium ${textCol} font-body`}>{a.title}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-body" style={{ background:`${theme.primary}15`, color:theme.primary }}>{a.tag}</span>
+                          </div>
+                          <Icon name={openArticle===i?"ChevronUp":"ChevronDown"} size={14} style={{ color:theme.primary, flexShrink:0 }} />
+                        </div>
+                        {openArticle===i && (
+                          <div className="rounded-2xl px-4 py-3 mt-1 text-sm font-body leading-relaxed"
+                            style={{ background:`${theme.primary}04`, color:isDark?"#d4c8e8":"#555", borderLeft:`3px solid ${theme.primary}`, borderRadius:"0 12px 12px 12px" }}>
+                            {a.text}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ):<Btn onClick={()=>setShowArticles(true)}>Читать статьи</Btn>}
+                    ))}
+                  </div>
+                </>
+              ) : <Btn onClick={()=>setShowArticles(true)}>Читать статьи</Btn>}
             </Card>
           </>
         )}
@@ -1324,21 +1413,45 @@ export default function Index() {
             </Card>
 
             <Card>
-              <CardHeader icon="BookOpen" title="Статьи" />
-              {showPregArticles?(
-                <div className="space-y-3">
-                  {pregArticles.map((a,i)=>(
-                    <div key={i} className="rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border transition-colors hover:opacity-80"
-                      style={{ background:"rgba(168,85,247,0.06)", borderColor:"rgba(168,85,247,0.22)" }}>
-                      <span className="text-xl">{a.emoji}</span>
-                      <div>
-                        <p className={`text-sm font-medium ${textCol} font-body`}>{a.title}</p>
-                        <span className="text-xs px-2 py-0.5 rounded-full font-body bg-purple-100 text-purple-500">{a.tag}</span>
+              <CardHeader icon="BookOpen" title={`Статьи (${pregArticles.length})`} />
+              {showPregArticles ? (
+                <>
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {["Все", ...Array.from(new Set(pregArticles.map(a=>a.tag)))].map(tag=>(
+                      <button key={tag} onClick={()=>{ setArticleFilter(tag); setOpenArticle(null); }}
+                        className="text-xs font-body px-3 py-1 rounded-full border transition-all"
+                        style={articleFilter===tag
+                          ?{ background:"linear-gradient(135deg,hsl(270,60%,65%),hsl(300,50%,60%))", color:"#fff", borderColor:"transparent" }
+                          :{ background:"rgba(168,85,247,0.08)", color:"#7c3aed", borderColor:"rgba(168,85,247,0.3)" }}>
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {pregArticles.filter(a=>articleFilter==="Все"||a.tag===articleFilter).map((a,i)=>(
+                      <div key={i}>
+                        <div
+                          onClick={()=>setOpenArticle(openArticle===i+100?null:i+100)}
+                          className="rounded-2xl px-4 py-3 flex items-center gap-3 cursor-pointer border transition-all hover:opacity-90"
+                          style={{ background:"rgba(168,85,247,0.06)", borderColor:openArticle===i+100?"#a855f7":"rgba(168,85,247,0.22)" }}>
+                          <span className="text-xl flex-shrink-0">{a.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium ${textCol} font-body`}>{a.title}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-body bg-purple-100 text-purple-500">{a.tag}</span>
+                          </div>
+                          <Icon name={openArticle===i+100?"ChevronUp":"ChevronDown"} size={14} style={{ color:"#a855f7", flexShrink:0 }} />
+                        </div>
+                        {openArticle===i+100 && (
+                          <div className="rounded-2xl px-4 py-3 mt-1 text-sm font-body leading-relaxed"
+                            style={{ background:"rgba(168,85,247,0.04)", color:isDark?"#d4c8e8":"#555", borderLeft:"3px solid #a855f7", borderRadius:"0 12px 12px 12px" }}>
+                            {a.text}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ):<Btn onClick={()=>setShowPregArticles(true)} style={{ background:"linear-gradient(135deg,hsl(270,60%,65%),hsl(300,50%,60%))" }}>Читать статьи</Btn>}
+                    ))}
+                  </div>
+                </>
+              ) : <Btn onClick={()=>setShowPregArticles(true)} style={{ background:"linear-gradient(135deg,hsl(270,60%,65%),hsl(300,50%,60%))" }}>Читать статьи</Btn>}
             </Card>
           </>
         )}
@@ -1352,9 +1465,15 @@ export default function Index() {
                 style={{ background:`linear-gradient(135deg,${theme.primary}30,${theme.primary}15)` }}>
                 <Icon name="Sparkles" size={18} style={{ color:theme.primary }} />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className={`font-display text-base ${textCol}`}>Луна — ИИ-помощник</p>
-                <p className={`text-xs font-body ${mutedCol}`}>Вопросы о цикле, беременности, здоровье</p>
+                {weeksPregnant && weeksPregnant > 0 ? (
+                  <p className="text-xs font-body text-purple-500">Знаю о твоей беременности · {weeksPregnant} нед.</p>
+                ) : cycleDay ? (
+                  <p className={`text-xs font-body ${mutedCol}`}>Знаю твой цикл · день {cycleDay}</p>
+                ) : (
+                  <p className={`text-xs font-body ${mutedCol}`}>Вопросы о цикле, беременности, здоровье</p>
+                )}
               </div>
               <button
                 onClick={()=>setChatMessages([{ role:"assistant", content:"Привет! Я Луна — твой персональный помощник 🌸 Задавай любые вопросы о цикле, беременности или самочувствии." }])}
