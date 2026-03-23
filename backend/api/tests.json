@@ -1,0 +1,60 @@
+{
+  "tests": [
+    {
+      "name": "Проверка базового эндпоинта",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": { "status": "ok" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Создать пользователя",
+      "method": "POST",
+      "path": "/",
+      "headers": { "X-Device-Id": "test-device-autotest" },
+      "body": { "action": "user_save", "name": "Тест" },
+      "expectedStatus": 200,
+      "expectedBody": { "id": "string" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Получить пользователя",
+      "method": "GET",
+      "path": "/?action=user_get",
+      "headers": { "X-Device-Id": "test-device-autotest" },
+      "expectedStatus": 200,
+      "expectedBody": { "exists": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сохранить данные цикла",
+      "method": "POST",
+      "path": "/",
+      "headers": { "X-Device-Id": "test-device-autotest" },
+      "body": { "action": "cycle_save", "cycle_start": "2026-03-01", "cycle_end": "2026-03-05", "symptoms": ["Усталость"], "note": "Тест" },
+      "expectedStatus": 200,
+      "expectedBody": { "ok": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Создать приглашение партнёра",
+      "method": "POST",
+      "path": "/",
+      "headers": { "X-Device-Id": "test-device-autotest" },
+      "body": { "action": "partner_invite" },
+      "expectedStatus": 200,
+      "expectedBody": { "invite_code": "string" },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Статус партнёра",
+      "method": "GET",
+      "path": "/?action=partner_status",
+      "headers": { "X-Device-Id": "test-device-autotest" },
+      "expectedStatus": 200,
+      "expectedBody": {},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
