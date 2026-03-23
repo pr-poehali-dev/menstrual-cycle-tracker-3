@@ -26,7 +26,10 @@ async function apiCall(method: "GET" | "POST", action: string, body?: object) {
   return res.json();
 }
 
-type Tab = "cycle" | "conceive" | "pregnancy";
+type Tab = "cycle" | "conceive" | "pregnancy" | "chat";
+type ChatMsg = { role: "user" | "assistant"; content: string };
+
+const CHAT_URL = "https://functions.poehali.dev/0d4f875d-8dc3-4406-9686-46d709c63a89";
 
 // ─── Темы ────────────────────────────────────────────────────────────────────
 interface Theme {
@@ -196,6 +199,14 @@ export default function Index() {
   const [partnerLoading, setPartnerLoading] = useState(false);
   const [partnerMsg, setPartnerMsg] = useState("");
 
+  // — Чат с ИИ —
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
+    { role: "assistant", content: "Привет! Я Луна — твой персональный помощник 🌸 Задавай любые вопросы о цикле, беременности или самочувствии." }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   // — Инициализация —
   useEffect(() => {
     // регистрируем пользователя при первом открытии
@@ -286,8 +297,32 @@ export default function Index() {
     swipeStartY.current = null;
   };
 
+  // ── Чат ───────────────────────────────────────────────────────────────────────
+  const sendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg: ChatMsg = { role: "user", content: chatInput.trim() };
+    const newMsgs = [...chatMessages, userMsg];
+    setChatMessages(newMsgs);
+    setChatInput("");
+    setChatLoading(true);
+    try {
+      const res = await fetch(CHAT_URL + "/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMsgs }),
+      });
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: "assistant", content: data.reply || "Не удалось получить ответ" }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Ошибка соединения. Попробуй ещё раз." }]);
+    } finally {
+      setChatLoading(false);
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  };
+
   // ── Метки дней ────────────────────────────────────────────────────────────────
-  const getDayMark = (dt: Date, mode: Tab) => {
+  const getDayMark = (dt: Date, mode: "cycle" | "conceive" | "pregnancy") => {
     if (mode==="pregnancy") {
       if (dueDate && isSameDay(dt, new Date(dueDate))) return "due";
       if (lastPeriod) {
@@ -394,11 +429,9 @@ export default function Index() {
   };
 
   // ── WeekStrip ────────────────────────────────────────────────────────────────
-  const WeekStrip = ({ mode }: { mode: Tab }) => {
+  const WeekStrip = ({ mode }: { mode: "cycle" | "conceive" | "pregnancy" }) => {
     const pregWD = (mode==="pregnancy" && weeksPregnant && weeksPregnant>=4)
       ? getPregnancyWeekData(weeksPregnant) : null;
-    const embryoEmoji = (mode==="pregnancy" && weeksPregnant && weeksPregnant>=4)
-      ? getEmbryoEmoji(weeksPregnant) : null;
     const isCurrentWeek = weekOffset===0;
 
     return (
@@ -517,13 +550,92 @@ export default function Index() {
 
         {/* Блок эмбриона + данных плода */}
         {mode==="pregnancy" && (
-          embryoEmoji && pregWD && weeksPregnant ? (
+          pregWD && weeksPregnant && weeksPregnant>=4 ? (
             <div className="rounded-2xl px-4 py-4 border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50">
-              {/* Эмбрион + неделя */}
               <div className="flex items-center gap-4 mb-3">
-                <div className="w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0"
-                  style={{ background:"linear-gradient(135deg,rgba(168,85,247,0.15),rgba(236,72,153,0.1))", border:"2px solid rgba(168,85,247,0.2)" }}>
-                  <span style={{ fontSize:"44px", lineHeight:1 }}>{embryoEmoji}</span>
+                {/* SVG-эмбрион анимированный */}
+                <div
+                  className="w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0 cursor-pointer select-none"
+                  style={{ background:"linear-gradient(135deg,rgba(168,85,247,0.18),rgba(236,72,153,0.12))", border:"2px solid rgba(168,85,247,0.25)" }}
+                  title="Привет, малыш! 👋"
+                >
+                  {weeksPregnant <= 6 ? (
+                    <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <style>{`
+                        @keyframes embryo-float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-4px) rotate(5deg)} }
+                        @keyframes embryo-pulse { 0%,100%{r:7} 50%{r:8.5} }
+                        .emb-body { animation: embryo-float 2.8s ease-in-out infinite; transform-origin:26px 26px; }
+                        .emb-heart { animation: embryo-pulse 0.9s ease-in-out infinite; transform-origin:26px 22px; }
+                      `}</style>
+                      <g className="emb-body">
+                        <ellipse cx="26" cy="28" rx="10" ry="13" fill="rgba(168,85,247,0.25)" stroke="rgba(168,85,247,0.5)" strokeWidth="1.5"/>
+                        <circle className="emb-heart" cx="26" cy="22" r="7" fill="rgba(236,72,153,0.3)" stroke="rgba(236,72,153,0.6)" strokeWidth="1.5"/>
+                        <circle cx="23" cy="20" r="1.5" fill="rgba(168,85,247,0.7)"/>
+                        <circle cx="29" cy="20" r="1.5" fill="rgba(168,85,247,0.7)"/>
+                      </g>
+                    </svg>
+                  ) : weeksPregnant <= 12 ? (
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <style>{`
+                        @keyframes fish-swim { 0%,100%{transform:translateX(0) rotate(-3deg)} 50%{transform:translateX(3px) rotate(3deg)} }
+                        @keyframes tail-wave { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }
+                        .fish-body { animation: fish-swim 2.2s ease-in-out infinite; transform-origin:28px 28px; }
+                        .fish-tail { animation: tail-wave 1.1s ease-in-out infinite; transform-origin:13px 28px; }
+                      `}</style>
+                      <g className="fish-body">
+                        <ellipse cx="30" cy="28" rx="14" ry="9" fill="rgba(168,85,247,0.25)" stroke="rgba(168,85,247,0.5)" strokeWidth="1.5"/>
+                        <circle cx="40" cy="26" r="2" fill="rgba(168,85,247,0.8)"/>
+                        <ellipse cx="29" cy="24" rx="3" ry="2" fill="rgba(236,72,153,0.4)"/>
+                        <g className="fish-tail">
+                          <path d="M16 28 L8 20 L8 36 Z" fill="rgba(168,85,247,0.35)" stroke="rgba(168,85,247,0.5)" strokeWidth="1"/>
+                        </g>
+                        <line x1="24" y1="28" x2="34" y2="28" stroke="rgba(168,85,247,0.3)" strokeWidth="1"/>
+                        <line x1="26" y1="25" x2="26" y2="31" stroke="rgba(168,85,247,0.3)" strokeWidth="1"/>
+                      </g>
+                    </svg>
+                  ) : weeksPregnant <= 20 ? (
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <style>{`
+                        @keyframes baby-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+                        @keyframes arm-wave { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(15deg)} }
+                        .baby-body { animation: baby-breathe 3s ease-in-out infinite; transform-origin:28px 30px; }
+                        .baby-arm { animation: arm-wave 2s ease-in-out infinite; transform-origin:22px 30px; }
+                      `}</style>
+                      <g className="baby-body">
+                        <circle cx="28" cy="20" r="10" fill="rgba(236,72,153,0.22)" stroke="rgba(236,72,153,0.5)" strokeWidth="1.5"/>
+                        <ellipse cx="28" cy="34" rx="9" ry="11" fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.45)" strokeWidth="1.5"/>
+                        <circle cx="24" cy="18" r="1.8" fill="rgba(168,85,247,0.7)"/>
+                        <circle cx="32" cy="18" r="1.8" fill="rgba(168,85,247,0.7)"/>
+                        <path d="M24 23 Q28 26 32 23" stroke="rgba(236,72,153,0.7)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                      </g>
+                      <g className="baby-arm">
+                        <line x1="19" y1="30" x2="11" y2="38" stroke="rgba(168,85,247,0.5)" strokeWidth="3" strokeLinecap="round"/>
+                      </g>
+                      <line x1="37" y1="30" x2="45" y2="36" stroke="rgba(168,85,247,0.5)" strokeWidth="3" strokeLinecap="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <style>{`
+                        @keyframes kick { 0%,70%,100%{transform:rotate(0deg)} 75%{transform:rotate(20deg)} 85%{transform:rotate(-10deg)} }
+                        @keyframes bigbaby-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+                        .bigbaby { animation: bigbaby-breathe 3.5s ease-in-out infinite; transform-origin:28px 28px; }
+                        .leg-kick { animation: kick 3s ease-in-out infinite; transform-origin:28px 42px; }
+                      `}</style>
+                      <g className="bigbaby">
+                        <circle cx="28" cy="16" r="11" fill="rgba(236,72,153,0.25)" stroke="rgba(236,72,153,0.55)" strokeWidth="1.5"/>
+                        <ellipse cx="28" cy="34" rx="10" ry="13" fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.5)" strokeWidth="1.5"/>
+                        <circle cx="23" cy="14" r="2" fill="rgba(168,85,247,0.75)"/>
+                        <circle cx="33" cy="14" r="2" fill="rgba(168,85,247,0.75)"/>
+                        <path d="M23 20 Q28 24 33 20" stroke="rgba(236,72,153,0.7)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                        <line x1="18" y1="30" x2="9" y2="38" stroke="rgba(168,85,247,0.5)" strokeWidth="3.5" strokeLinecap="round"/>
+                        <line x1="38" y1="30" x2="47" y2="36" stroke="rgba(168,85,247,0.5)" strokeWidth="3.5" strokeLinecap="round"/>
+                      </g>
+                      <g className="leg-kick">
+                        <line x1="22" y1="44" x2="16" y2="52" stroke="rgba(168,85,247,0.5)" strokeWidth="3.5" strokeLinecap="round"/>
+                        <line x1="34" y1="44" x2="40" y2="52" stroke="rgba(168,85,247,0.5)" strokeWidth="3.5" strokeLinecap="round"/>
+                      </g>
+                    </svg>
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${mutedCol} font-body`}>Неделя беременности</p>
@@ -534,7 +646,6 @@ export default function Index() {
                   )}
                 </div>
               </div>
-              {/* Параметры */}
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label:"Размер", value:pregWD.size },
@@ -559,76 +670,120 @@ export default function Index() {
   };
 
   // ── Полный календарь ─────────────────────────────────────────────────────────
-  const CalendarModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4"
-      style={{ background:"rgba(0,0,0,0.35)", backdropFilter:"blur(6px)" }}
-      onClick={e=>{ if(e.target===e.currentTarget) setCalOpen(false); }}>
-      <div className="w-full max-w-sm rounded-3xl p-5 space-y-4" style={{ ...cardStyle, background:isDark?"rgba(30,15,40,0.98)":"rgba(255,255,255,0.98)" }}>
-        <div className="flex items-center justify-between">
-          <button onClick={prevCalMonth} className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-70" style={{ background:`${theme.primary}18` }}>
-            <Icon name="ChevronLeft" size={16} style={{ color:theme.primary }} />
-          </button>
-          <h3 className={`font-display text-lg ${textCol}`}>{MONTHS_FULL[calMonth]} {calYear}</h3>
-          <button onClick={nextCalMonth} className="w-8 h-8 rounded-full flex items-center justify-center hover:opacity-70" style={{ background:`${theme.primary}18` }}>
-            <Icon name="ChevronRight" size={16} style={{ color:theme.primary }} />
-          </button>
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {SHORT_DAYS.map(d=>(
-            <div key={d} className={`text-center text-xs py-1 font-body font-semibold ${mutedCol}`}>{d}</div>
-          ))}
-          {buildCalCells().map((d,i)=>{
-            const isT=d?isCalToday(d):false;
-            const hasEv=d?!!calEvents[calKey(d)]:false;
-            const isSel=d===selectedDay;
-            return (
-              <div key={i} onClick={()=>d&&setSelectedDay(d)}
-                className={`aspect-square rounded-2xl flex items-center justify-center text-sm font-body cursor-pointer transition-all relative ${d?"hover:opacity-80":""}`}
-                style={isT?{background:theme.primary,color:theme.primaryFg}:isSel?{background:`${theme.primary}25`,color:theme.primary}:{background:"transparent",color:isDark?"#ccc":"inherit"}}>
-                {d || ""}
-                {hasEv && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{ background:theme.primary }} />}
-              </div>
-            );
-          })}
-        </div>
-        {selectedDay && (
-          <div className="space-y-3">
-            <p className={`text-xs ${mutedCol} font-body font-semibold uppercase tracking-wide`}>
-              {selectedDay} {MONTHS_SHORT[calMonth]} {calYear}
-            </p>
-            {calEvents[calKey(selectedDay)] && (
-              <div className="rounded-2xl px-3 py-2 text-sm font-body" style={{ background:`${theme.primary}12`, color:theme.primary }}>
-                📌 {calEvents[calKey(selectedDay)]}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input value={newEvent} onChange={e=>setNewEvent(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&addCalEvent()}
-                placeholder="Добавить заметку..."
-                className={`flex-1 rounded-2xl border px-3 py-2 text-sm font-body focus:outline-none ${isDark?"bg-white/10 text-gray-100 border-white/20":"bg-pink-50/60 border-pink-200 text-foreground"}`} />
-              <button onClick={addCalEvent}
-                className="px-4 py-2 rounded-2xl text-sm font-body font-medium transition-all"
-                style={btnPrimary}>+</button>
-            </div>
+  const CalendarModal = () => {
+    const getDayMarkCal = (day: number): string|null => {
+      const dt = new Date(calYear, calMonth, day);
+      return getDayMark(dt, activeTab==="pregnancy"?"pregnancy":"cycle");
+    };
+    const goToday = () => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDay(today.getDate()); };
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4"
+        style={{ background:"rgba(0,0,0,0.35)", backdropFilter:"blur(6px)" }}
+        onClick={e=>{ if(e.target===e.currentTarget) setCalOpen(false); }}>
+        <div className="w-full max-w-sm rounded-3xl p-5 space-y-4" style={{ ...cardStyle, background:isDark?"rgba(30,15,40,0.98)":"rgba(255,255,255,0.98)" }}>
+          {/* Шапка */}
+          <div className="flex items-center justify-between">
+            <button onClick={prevCalMonth} className="w-9 h-9 rounded-2xl flex items-center justify-center hover:opacity-70 transition-opacity" style={{ background:`${theme.primary}18` }}>
+              <Icon name="ChevronLeft" size={16} style={{ color:theme.primary }} />
+            </button>
+            <button onClick={goToday} className="flex flex-col items-center">
+              <h3 className={`font-display text-lg ${textCol} leading-tight`}>{MONTHS_FULL[calMonth]}</h3>
+              <span className={`text-xs font-body ${mutedCol}`}>{calYear}</span>
+            </button>
+            <button onClick={nextCalMonth} className="w-9 h-9 rounded-2xl flex items-center justify-center hover:opacity-70 transition-opacity" style={{ background:`${theme.primary}18` }}>
+              <Icon name="ChevronRight" size={16} style={{ color:theme.primary }} />
+            </button>
           </div>
-        )}
-        {Object.keys(calEvents).length>0 && (
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            <p className={`text-xs ${mutedCol} font-body font-semibold uppercase tracking-wide`}>Все события</p>
-            {Object.entries(calEvents).map(([k,v])=>(
-              <div key={k} className="flex items-center justify-between rounded-2xl px-3 py-2 text-sm font-body"
-                style={{ background:`${theme.primary}0E`, border:`1px solid ${theme.primary}22` }}>
-                <span className={mutedCol}>{k}</span>
-                <span style={{ color:theme.primary }}>{v}</span>
-              </div>
+
+          {/* Дни недели */}
+          <div className="grid grid-cols-7 gap-1">
+            {SHORT_DAYS.map(d=>(
+              <div key={d} className={`text-center text-xs py-1 font-body font-semibold ${mutedCol}`}>{d}</div>
+            ))}
+            {buildCalCells().map((d,i)=>{
+              const isT = d ? isCalToday(d) : false;
+              const hasEv = d ? !!calEvents[calKey(d)] : false;
+              const isSel = d === selectedDay;
+              const mark = d ? getDayMarkCal(d) : null;
+              let bg = "transparent", color = isDark?"#ccc":"inherit", dot = "";
+              if (mark==="period")    { bg="rgba(244,63,94,0.15)";  color="#e11d48"; dot="🩸"; }
+              if (mark==="ovulation") { bg="rgba(34,197,94,0.15)";  color="#16a34a"; dot="🌿"; }
+              if (mark==="pregnant")  { bg="rgba(168,85,247,0.12)"; color="#7c3aed"; dot="🤰"; }
+              if (mark==="due")       { bg="#a855f7"; color="#fff"; dot="👶"; }
+              if (isT)  { bg=theme.primary; color=theme.primaryFg; }
+              if (isSel && !isT) { bg=`${theme.primary}28`; color=theme.primary; }
+              return (
+                <div key={i} onClick={()=>d&&setSelectedDay(d)}
+                  className={`aspect-square rounded-2xl flex flex-col items-center justify-center text-xs font-body cursor-pointer transition-all relative ${d?"hover:opacity-80":""}`}
+                  style={{ background:bg, color }}>
+                  <span className="font-medium leading-none">{d||""}</span>
+                  {d && (hasEv || dot) && (
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] leading-none">
+                      {hasEv ? "•" : dot}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Легенда */}
+          <div className="flex gap-3 flex-wrap">
+            {[
+              { color:"rgba(244,63,94,0.6)", label:"Менструация" },
+              { color:"rgba(34,197,94,0.6)",  label:"Овуляция" },
+              { color:"rgba(168,85,247,0.6)", label:"Беременность" },
+            ].map(l=>(
+              <span key={l.label} className="flex items-center gap-1 text-xs font-body" style={{ color:isDark?"#ccc":"hsl(335,20%,50%)" }}>
+                <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background:l.color }} />
+                {l.label}
+              </span>
             ))}
           </div>
-        )}
-        <button onClick={()=>setCalOpen(false)} className="w-full py-2 rounded-2xl text-sm font-body transition-all"
-          style={{ background:`${theme.primary}18`, color:theme.primary }}>Закрыть</button>
+
+          {/* Выбранный день */}
+          {selectedDay && (
+            <div className="space-y-3">
+              <p className={`text-xs ${mutedCol} font-body font-semibold uppercase tracking-wide`}>
+                {selectedDay} {MONTHS_SHORT[calMonth]} {calYear}
+              </p>
+              {calEvents[calKey(selectedDay)] && (
+                <div className="rounded-2xl px-3 py-2 text-sm font-body flex items-center gap-2" style={{ background:`${theme.primary}12`, color:theme.primary }}>
+                  <span>📌</span> {calEvents[calKey(selectedDay)]}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input value={newEvent} onChange={e=>setNewEvent(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&addCalEvent()}
+                  placeholder="Добавить заметку..."
+                  className={`flex-1 rounded-2xl border px-3 py-2 text-sm font-body focus:outline-none ${isDark?"bg-white/10 text-gray-100 border-white/20":"bg-pink-50/60 border-pink-200 text-foreground"}`} />
+                <button onClick={addCalEvent}
+                  className="px-4 py-2 rounded-2xl text-sm font-body font-medium transition-all"
+                  style={btnPrimary}>+</button>
+              </div>
+            </div>
+          )}
+
+          {/* Список событий */}
+          {Object.keys(calEvents).length>0 && (
+            <div className="space-y-1.5 max-h-28 overflow-y-auto">
+              <p className={`text-xs ${mutedCol} font-body font-semibold uppercase tracking-wide`}>Заметки</p>
+              {Object.entries(calEvents).map(([k,v])=>(
+                <div key={k} className="flex items-center justify-between rounded-2xl px-3 py-2 text-xs font-body"
+                  style={{ background:`${theme.primary}0E`, border:`1px solid ${theme.primary}22` }}>
+                  <span className={mutedCol}>{k}</span>
+                  <span style={{ color:theme.primary }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button onClick={()=>{ setCalOpen(false); }} className="w-full py-2.5 rounded-2xl text-sm font-body transition-all"
+            style={{ background:`${theme.primary}18`, color:theme.primary }}>Закрыть</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── Модал выбора темы ────────────────────────────────────────────────────────
   const ThemeModal = () => (
@@ -904,14 +1059,15 @@ export default function Index() {
         <div className="flex gap-2 p-1.5 rounded-3xl backdrop-blur border border-pink-100"
           style={{ background:isDark?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.6)" }}>
           {([
-            { id:"cycle",     label:"Мой цикл",    icon:"Moon" },
+            { id:"cycle",     label:"Цикл",        icon:"Moon" },
             { id:"conceive",  label:"Планирование", icon:"Leaf" },
             { id:"pregnancy", label:"Беременность", icon:"Baby" },
+            { id:"chat",      label:"ИИ-чат",       icon:"MessageCircle" },
           ] as { id:Tab; label:string; icon:string }[]).map(t=>(
             <button key={t.id} onClick={()=>setActiveTab(t.id)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium font-body transition-all duration-300"
+              className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-2xl text-xs font-medium font-body transition-all duration-300"
               style={activeTab===t.id?tabActiveStyle:{ background:"rgba(255,255,255,0.5)", color:"hsl(335,30%,50%)" }}>
-              <Icon name={t.icon} size={13} />
+              <Icon name={t.icon} size={12} />
               {t.label}
             </button>
           ))}
@@ -1071,15 +1227,7 @@ export default function Index() {
               </div>
             </Card>
 
-            {/* Перейти в беременность - ссылка */}
-            <div className="rounded-2xl px-4 py-4 text-center border" style={{ background:`${theme.primary}06`, borderColor:`${theme.primary}20` }}>
-              <p className={`text-sm ${mutedCol} font-body mb-2`}>Уже беременны?</p>
-              <button onClick={()=>setActiveTab("pregnancy")}
-                className="text-sm font-body font-medium hover:opacity-80 transition-opacity"
-                style={{ color:theme.primary }}>
-                Перейти в режим «Беременность» →
-              </button>
-            </div>
+
           </>
         )}
 
@@ -1193,6 +1341,94 @@ export default function Index() {
               ):<Btn onClick={()=>setShowPregArticles(true)} style={{ background:"linear-gradient(135deg,hsl(270,60%,65%),hsl(300,50%,60%))" }}>Читать статьи</Btn>}
             </Card>
           </>
+        )}
+
+        {/* ===== ЧАТ С ИИ ===== */}
+        {activeTab==="chat" && (
+          <Card className="flex flex-col" style={{ padding:0, overflow:"hidden" }}>
+            {/* Заголовок */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor:`${theme.primary}20` }}>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background:`linear-gradient(135deg,${theme.primary}30,${theme.primary}15)` }}>
+                <Icon name="Sparkles" size={18} style={{ color:theme.primary }} />
+              </div>
+              <div>
+                <p className={`font-display text-base ${textCol}`}>Луна — ИИ-помощник</p>
+                <p className={`text-xs font-body ${mutedCol}`}>Вопросы о цикле, беременности, здоровье</p>
+              </div>
+              <button
+                onClick={()=>setChatMessages([{ role:"assistant", content:"Привет! Я Луна — твой персональный помощник 🌸 Задавай любые вопросы о цикле, беременности или самочувствии." }])}
+                className={`ml-auto text-xs font-body px-3 py-1.5 rounded-full border transition-all hover:opacity-80`}
+                style={{ borderColor:`${theme.primary}40`, color:theme.primary, background:`${theme.primary}0A` }}>
+                Очистить
+              </button>
+            </div>
+
+            {/* Сообщения */}
+            <div className="flex flex-col gap-3 px-4 py-4 overflow-y-auto" style={{ minHeight:"320px", maxHeight:"400px" }}>
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role==="user"?"justify-end":"justify-start"}`}>
+                  {msg.role==="assistant" && (
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
+                      style={{ background:`linear-gradient(135deg,${theme.primary}35,${theme.primary}20)` }}>
+                      <Icon name="Sparkles" size={13} style={{ color:theme.primary }} />
+                    </div>
+                  )}
+                  <div
+                    className="max-w-[78%] px-4 py-2.5 rounded-2xl text-sm font-body leading-relaxed"
+                    style={msg.role==="user"
+                      ?{ background:theme.primary, color:theme.primaryFg, borderBottomRightRadius:"6px" }
+                      :{ background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.9)", color:isDark?"#e0d0f0":"hsl(335,30%,25%)", border:`1px solid ${theme.primary}20`, borderBottomLeftRadius:"6px" }}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2"
+                    style={{ background:`linear-gradient(135deg,${theme.primary}35,${theme.primary}20)` }}>
+                    <Icon name="Sparkles" size={13} style={{ color:theme.primary }} />
+                  </div>
+                  <div className="px-4 py-3 rounded-2xl text-sm font-body" style={{ background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.9)", border:`1px solid ${theme.primary}20` }}>
+                    <span className="inline-flex gap-1 items-center">
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background:theme.primary, animationDelay:"0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background:theme.primary, animationDelay:"150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background:theme.primary, animationDelay:"300ms" }} />
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Быстрые вопросы */}
+            <div className="px-4 pb-2 flex gap-2 flex-wrap">
+              {["Когда овуляция?","Признаки беременности","Как снять боль при ПМС","Что нельзя при беременности"].map(q=>(
+                <button key={q} onClick={()=>{ setChatInput(q); }}
+                  className="text-xs font-body px-3 py-1.5 rounded-full border transition-all hover:opacity-80"
+                  style={{ borderColor:`${theme.primary}35`, color:theme.primary, background:`${theme.primary}08` }}>
+                  {q}
+                </button>
+              ))}
+            </div>
+
+            {/* Ввод */}
+            <div className="px-4 pb-4 pt-2 flex gap-2">
+              <input
+                value={chatInput}
+                onChange={e=>setChatInput(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendChat()}
+                placeholder="Задай вопрос Луне..."
+                disabled={chatLoading}
+                className={`flex-1 rounded-2xl border px-4 py-2.5 text-sm font-body focus:outline-none disabled:opacity-50 ${isDark?"bg-white/10 text-gray-100 border-white/20 placeholder:text-gray-400":"bg-pink-50/60 border-pink-200 text-foreground placeholder:text-muted-foreground/50"}`}
+              />
+              <button onClick={sendChat} disabled={chatLoading||!chatInput.trim()}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 flex-shrink-0"
+                style={{ background:theme.primary }}>
+                <Icon name="Send" size={16} style={{ color:theme.primaryFg }} />
+              </button>
+            </div>
+          </Card>
         )}
       </main>
     </div>
